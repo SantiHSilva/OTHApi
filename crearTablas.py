@@ -1,6 +1,16 @@
 from utils import createTableIfNotExist
 
 def crear_tablas(cursor):
+  # Ejemplo
+
+  createTableIfNotExist(cursor, """
+      CREATE TABLE fapi_orders (
+        order_id NUMBER PRIMARY KEY,
+        product_name VARCHAR2(100) NOT NULL,
+        quantity NUMBER NOT NULL
+      )
+  """)
+
   # Roles
   createTableIfNotExist(cursor, """
     CREATE TABLE ROLES (

@@ -1,11 +1,13 @@
+import oracledb
 import logging
+
 from dotenv import load_dotenv
 from os import getenv 
 
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
-import oracledb
+from crearTablas import crear_tablas
 
 PORT = 8000
 load_dotenv()
@@ -29,22 +31,7 @@ pool = oracledb.create_pool(user=un, password=pw, dsn=cs, min=1, max=4, incremen
 # Set up the schema
 with pool.acquire() as connection:
     with connection.cursor() as cursor:
-        cursor.execute("""
-            BEGIN
-              BEGIN
-                EXECUTE IMMEDIATE 'DROP TABLE fapi_orders PURGE';
-                EXCEPTION WHEN OTHERS THEN
-                  IF SQLCODE <> -942 THEN
-                    RAISE;
-                  END IF;
-              END;
-
-              EXECUTE IMMEDIATE 'CREATE TABLE fapi_orders (
-                                   order_id NUMBER PRIMARY KEY,
-                                   product_name VARCHAR2(100) NOT NULL,
-                                   quantity NUMBER NOT NULL)';
-
-            END;""")
+        crear_tablas(cursor)
 
 # Endpoint to create an order
 @app.post("/orders/", response_model=Order)

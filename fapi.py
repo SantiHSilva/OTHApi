@@ -1,35 +1,18 @@
-#------------------------------------------------------------------------------
-# Copyright (c) 2023, Oracle and/or its affiliates.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#    https://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#------------------------------------------------------------------------------
-
-import os
 import logging
-import getpass
+from dotenv import load_dotenv
+from os import getenv 
 
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-import uvicorn
 
 import oracledb
 
 PORT = 8000
+load_dotenv()
 
-un = os.environ.get('PYTHON_USERNAME')
-cs = os.environ.get('PYTHON_CONNECTSTRING')
-pw = getpass.getpass(f'Enter password for {un}@{cs}: ')
-
+un = getenv('ORACLE_USERNAME')
+cs = getenv('ORACLE_CONNECTSTRING')
+pw = getenv('ORACLE_PASSWORD')
 
 # Pydantic model for order data
 class Order(BaseModel):
@@ -125,7 +108,6 @@ def update_order(order_id: int, updated_order: Order):
     except oracledb.Error as e:
         raise HTTPException(status_code=500, detail=f"Database error: {e}")
 
-# Close the connection pool on app shutdown
-@app.on_event("shutdown")
-def shutdown_event():
-    pool.close(force=True)
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("fapi:app", host="0.0.0.0", port=PORT, reload=True)

@@ -11,6 +11,7 @@ CREATE TABLE PERMISOS (
     escribir NUMBER NOT NULL,
     eliminar NUMBER NOT NULL,
     modificar NUMBER NOT NULL,
+    tabla VARCHAR2(50),
     PRIMARY KEY(id),
     CONSTRAINT fk_rol FOREIGN KEY (id_rol) REFERENCES ROLES(id)
 )

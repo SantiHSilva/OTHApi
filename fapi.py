@@ -33,67 +33,80 @@ with pool.acquire() as connection:
     with connection.cursor() as cursor:
         crear_tablas(cursor)
 
-# Endpoint to create an order
-@app.post("/orders/", response_model=Order)
-def create_order(order: Order):
+def template_create(table, data):
     try:
+        keys = ', '.join(data.keys())
+        values = ', '.join([f":{i + 1}" for i in range(len(data))])
         with pool.acquire() as connection:
             connection.autocommit = True
             with connection.cursor() as cursor:
-                cursor.execute(
-                    "INSERT INTO fapi_orders (order_id, product_name, quantity) VALUES (:1, :2, :3)",
-                    (order.order_id, order.product_name, order.quantity,))
-                return order
+                print(f'Executing: INSERT INTO {table} ({keys}) VALUES ({values}) {data.keys()}')
+                cursor.execute(f"INSERT INTO {table} ({keys}) VALUES ({values})", tuple(data.values()))
+                return data
     except oracledb.Error as e:
         raise HTTPException(status_code=500, detail=f"Database error: {e}")
+
+# Endpoint to retrieve all
+def template_select(table):
+    try:
+        with pool.acquire() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(f"SELECT * FROM {table}")
+                data = cursor.fetchall()
+                return data
+    except oracledb.Error as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {e}")
+
+def template_select_where(table, where, campos = []):
+    try:
+        with pool.acquire() as connection:
+            with connection.cursor() as cursor:
+                print(f'SELECT * FROM {table} WHERE {where}')
+                cursor.execute(f"SELECT * FROM {table} WHERE {where}")
+                data = cursor.fetchone()
+                if(data is None):
+                    raise HTTPException(status_code=404, detail=f"{table} {where} not found")
+                return {k: v for k, v in zip(campos, data)} if campos else data
+    except oracledb.Error as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {e}")
+    
+def template_update(table, data, where):
+    try:
+        set = ', '.join([f"{k} = :{i + 1}" for i, k in enumerate(data.keys())])
+        with pool.acquire() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(f"UPDATE {table} SET {set} WHERE {where}", tuple(data.values()))
+    except oracledb.Error as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {e}")
+    
+def template_delete(table, where):
+    try:
+        with pool.acquire() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(f"DELETE FROM {table} WHERE {where}")
+            return {"message": "Record deleted"}
+    except oracledb.Error as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {e}")
+
+# Endpoint to create an order
+@app.post("/orders/", response_model=Order)
+def create_order(order: Order):
+    return template_create('fapi_orders', order.dict())
 
 # Endpoint to retrieve an order by ID
 @app.get("/orders/{order_id}", response_model=Order)
 def get_order(order_id: int):
-    try:
-        with pool.acquire() as connection:
-            with connection.cursor() as cursor:
-                cursor.execute("SELECT order_id, product_name, quantity FROM fapi_orders WHERE order_id = :1", (order_id,))
-                result = cursor.fetchone()
-                if result:
-                    order = {
-                        "order_id": result[0],
-                        "product_name": result[1],
-                        "quantity": result[2],
-                    }
-                    return order
-                else:
-                    raise HTTPException(status_code=404, detail="Order not found")
-    except oracledb.Error as e:
-        raise HTTPException(status_code=500, detail=f"Database error: {e}")
+    return template_select_where('fapi_orders', f'order_id = {order_id}', ['order_id', 'product_name', 'quantity'])
 
 # Endpoint to delete an order by ID
 @app.delete("/orders/{order_id}")
 def delete_order(order_id: int):
-    try:
-        with pool.acquire() as connection:
-            connection.autocommit = True
-            with connection.cursor() as cursor:
-                cursor.execute("DELETE FROM fapi_orders WHERE order_id = :1", (order_id,))
-        return {"message": "Order deleted successfully"}
-    except oracledb.Error as e:
-        logging.error(f"Database error while deleting order: {e}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+    return template_delete('fapi_orders', f'order_id = {order_id}')
 
 # Endpoint to update an order by ID
 @app.put("/orders/{order_id}", response_model=Order)
 def update_order(order_id: int, updated_order: Order):
-    try:
-        with pool.acquire() as connection:
-            connection.autocommit = True
-            with connection.cursor() as cursor:
-                cursor.execute(
-                    "UPDATE fapi_orders SET product_name = :1, quantity = :2 WHERE order_id = :3",
-                    (updated_order.product_name, updated_order.quantity, order_id),
-                )
-        return updated_order
-    except oracledb.Error as e:
-        raise HTTPException(status_code=500, detail=f"Database error: {e}")
+    return template_update('fapi_orders', updated_order.dict(), f'order_id = {order_id}')
 
 if __name__ == "__main__":
     import uvicorn

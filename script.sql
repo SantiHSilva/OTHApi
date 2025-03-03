@@ -133,3 +133,28 @@ INSERT INTO COMPARTIR_HORARIO (url_acesso, id_horario) VALUES ('https://mis-hora
 -- Insertar comentarios sobre horarios
 INSERT INTO COMENTARIOS_HORARIO (id_horario, id_usuario, comentario, publicado) VALUES (1, 3, 'Muy buena clase de matemáticas', SYSDATE);
 INSERT INTO COMENTARIOS_HORARIO (id_horario, id_usuario, comentario, publicado) VALUES (2, 3, 'La historia es interesante', SYSDATE);
+
+
+CREATE OR REPLACE FUNCTION obtener_horario(p_url_acesso VARCHAR2)
+RETURN SYS_REFCURSOR IS
+    v_cursor SYS_REFCURSOR;
+BEGIN
+    OPEN v_cursor FOR
+        SELECT 
+            hu.nombre AS nombre_horario,
+            m.nombre AS nombre_materia,
+            m.color,
+            h.dia,
+            h.hora_incio,
+            h.hora_fin,
+            dh.descripcion AS detalle,
+            ch.URL_ACESSO
+        FROM COMPARTIR_HORARIO ch
+        JOIN HORARIOS_USUARIOS hu ON ch.id_horario = hu.id
+        JOIN MATERIAS m ON hu.id = m.id_horario
+        JOIN HORARIOS h ON m.id = h.id_materia
+        LEFT JOIN DETALLES_HORARIOS dh ON h.id = dh.id_horario
+        WHERE ch.URL_ACESSO = p_url_acesso;
+    
+    RETURN v_cursor;
+END obtener_horario;

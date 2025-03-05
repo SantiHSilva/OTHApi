@@ -258,12 +258,14 @@ SELECT
     hu.nombre AS nombre_horario,
 
     -- Información de las materias
+    m.id AS id_materia,
     m.nombre AS nombre_materia,
     m.color AS color_materia,
     dm.descripcion AS descripcion_materia,
     dm.mostrar AS mostrar_detalle_materia,
 
     -- Información de los horarios
+    h.id AS id_horario,
     h.dia AS dia_horario,
     h.hora_incio AS hora_inicio,
     h.hora_fin AS hora_fin,
@@ -285,4 +287,4 @@ FROM
     LEFT JOIN COMENTARIOS_HORARIO chc ON hu.id = chc.id_horario
     LEFT JOIN USUARIOS u ON chc.id_usuario = u.id
 WHERE
-    ch.url_acesso = :url_acesso;  -- Filtra por la URL proporcionada
+    ch.url_acesso = :url_acesso;

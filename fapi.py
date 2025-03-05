@@ -148,19 +148,21 @@ def template_execute(query, getting = False):
 def transformar_datos(datos):
     resultado = defaultdict(lambda: {"nombre_horario": "", "comentarios": [], "materias": []})
     materias_dict = {}
+    horarios_dict = {}
     
     for item in datos:
         url = item["url_compartido"]
         resultado[url]["url_compartido"] = url
         resultado[url]["nombre_horario"] = item["nombre_horario"]
         
-        # Agregar comentario
+        # Agregar comentario si no está duplicado
         comentario = {
             "comentario": item["comentario_horario"],
             "fecha": item["fecha_comentario"],
             "nombre_usuario": item["nombre_usuario_comentario"]
         }
-        resultado[url]["comentarios"].append(comentario)
+        if comentario not in resultado[url]["comentarios"]:
+            resultado[url]["comentarios"].append(comentario)
         
         # Clave única para la materia
         clave_materia = (url, item["nombre_materia"])
@@ -177,17 +179,22 @@ def transformar_datos(datos):
             materias_dict[clave_materia] = materia
             resultado[url]["materias"].append(materia)
         
-        # Agregar horario
-        horario = {
-            "dia": item["dia_horario"],
-            "hora_inicio": item["hora_inicio"],
-            "hora_fin": item["hora_fin"],
-            "descripciones": [{
-                "descripcion": item["descripcion_horario"],
-                "mostrar": item["mostrar_detalle_horario"]
-            }]
-        }
-        materias_dict[clave_materia]["horarios"].append(horario)
+        # Clave única para el horario
+        clave_horario = (clave_materia, item["id_horario"])
+        if clave_horario not in horarios_dict:
+            horario = {
+                "dia": item["dia_horario"],
+                "hora_inicio": item["hora_inicio"],
+                "hora_fin": item["hora_fin"],
+                "descripciones": []
+            }
+            if item["descripcion_horario"]:
+                horario["descripciones"].append({
+                    "descripcion": item["descripcion_horario"],
+                    "mostrar": item["mostrar_detalle_horario"]
+                })
+            horarios_dict[clave_horario] = horario
+            materias_dict[clave_materia]["horarios"].append(horario)
     
     return list(resultado.values())
 
@@ -206,6 +213,7 @@ def obtener_horario(url: str):
             dm.mostrar AS mostrar_detalle_materia,
 
             -- Información de los horarios
+            h.id AS id_horario,
             h.dia AS dia_horario,
             h.hora_incio AS hora_inicio,
             h.hora_fin AS hora_fin,
@@ -237,6 +245,7 @@ def obtener_horario(url: str):
         'color_materia',
         'descripcion_materia',
         'mostrar_detalle_materia',
+        'id_horario',
         'dia_horario',
         'hora_inicio',
         'hora_fin',
@@ -258,8 +267,7 @@ def obtener_horario(url: str):
     except oracledb.Error as e:
         raise HTTPException(status_code=500, detail=f"Database error: {e}")
 
-
-@app.get('/operacion/eliminarRol/{rolId}', tags=["Operaciones"])
+@app.delete('/operacion/eliminarRol/{rolId}', tags=["Operaciones"])
 def eliminar_rol(rolId: int):
     return template_execute(f"""
         BEGIN

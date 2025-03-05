@@ -249,3 +249,40 @@ EXCEPTION
         ROLLBACK TO inicio_transaccion;
         RAISE;  -- Relanzar la excepción para notificar el error
 END;
+
+-- Obtener información de los horarios
+
+SELECT
+    -- Información del horario compartido
+    ch.url_acesso AS url_compartido,
+    hu.nombre AS nombre_horario,
+
+    -- Información de las materias
+    m.nombre AS nombre_materia,
+    m.color AS color_materia,
+    dm.descripcion AS descripcion_materia,
+    dm.mostrar AS mostrar_detalle_materia,
+
+    -- Información de los horarios
+    h.dia AS dia_horario,
+    h.hora_incio AS hora_inicio,
+    h.hora_fin AS hora_fin,
+    dh.descripcion AS descripcion_horario,
+    dh.mostrar AS mostrar_detalle_horario,
+
+    -- Información de los comentarios
+    chc.comentario AS comentario_horario,
+    chc.publicado AS fecha_comentario,
+    u.nombre AS nombre_usuario_comentario
+
+FROM
+    COMPARTIR_HORARIO ch
+    JOIN HORARIOS_USUARIOS hu ON ch.id_horario = hu.id
+    JOIN MATERIAS m ON hu.id = m.id_horario
+    LEFT JOIN DETALLES_MATERIAS dm ON m.id = dm.id_materia
+    JOIN HORARIOS h ON m.id = h.id_materia
+    LEFT JOIN DETALLES_HORARIOS dh ON h.id = dh.id_horario
+    LEFT JOIN COMENTARIOS_HORARIO chc ON hu.id = chc.id_horario
+    LEFT JOIN USUARIOS u ON chc.id_usuario = u.id
+WHERE
+    ch.url_acesso = :url_acesso;  -- Filtra por la URL proporcionada

@@ -9,6 +9,8 @@ from pydantic import BaseModel
 
 from crearTablas import crear_tablas
 
+from collections import defaultdict
+
 PORT = 3000
 load_dotenv()
 
@@ -128,6 +130,229 @@ def template_delete(table, where):
     except oracledb.Error as e:
         raise HTTPException(status_code=500, detail=f"Database error: {e}")
 
+def template_execute(query, getting = False):
+    try:
+        with pool.acquire() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(query)
+                if(getting):
+                    return cursor.fetchall()
+                return {"message": "Query executed"}
+    except oracledb.Error as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {e}")
+
+#
+# OPERACIONES
+#
+
+def transformar_datos(datos):
+    resultado = defaultdict(lambda: {"nombre_horario": "", "comentarios": [], "materias": []})
+    materias_dict = {}
+    
+    for item in datos:
+        url = item["url_compartido"]
+        resultado[url]["url_compartido"] = url
+        resultado[url]["nombre_horario"] = item["nombre_horario"]
+        
+        # Agregar comentario
+        comentario = {
+            "comentario": item["comentario_horario"],
+            "fecha": item["fecha_comentario"],
+            "nombre_usuario": item["nombre_usuario_comentario"]
+        }
+        resultado[url]["comentarios"].append(comentario)
+        
+        # Clave única para la materia
+        clave_materia = (url, item["nombre_materia"])
+        if clave_materia not in materias_dict:
+            materia = {
+                "nombre": item["nombre_materia"],
+                "color": item["color_materia"].lower(),
+                "descripciones": [{
+                    "descripcion": item["descripcion_materia"],
+                    "mostrar": item["mostrar_detalle_materia"]
+                }],
+                "horarios": []
+            }
+            materias_dict[clave_materia] = materia
+            resultado[url]["materias"].append(materia)
+        
+        # Agregar horario
+        horario = {
+            "dia": item["dia_horario"],
+            "hora_inicio": item["hora_inicio"],
+            "hora_fin": item["hora_fin"],
+            "descripciones": [{
+                "descripcion": item["descripcion_horario"],
+                "mostrar": item["mostrar_detalle_horario"]
+            }]
+        }
+        materias_dict[clave_materia]["horarios"].append(horario)
+    
+    return list(resultado.values())
+
+@app.get('/operacion/obtenerHorario/{url}', tags=["Operaciones"])
+def obtener_horario(url: str):
+    QUERY = f"""
+        SELECT
+            -- Información del horario compartido
+            ch.url_acesso AS url_compartido,
+            hu.nombre AS nombre_horario,
+
+            -- Información de las materias
+            m.nombre AS nombre_materia,
+            m.color AS color_materia,
+            dm.descripcion AS descripcion_materia,
+            dm.mostrar AS mostrar_detalle_materia,
+
+            -- Información de los horarios
+            h.dia AS dia_horario,
+            h.hora_incio AS hora_inicio,
+            h.hora_fin AS hora_fin,
+            dh.descripcion AS descripcion_horario,
+            dh.mostrar AS mostrar_detalle_horario,
+
+            -- Información de los comentarios
+            chc.comentario AS comentario_horario,
+            chc.publicado AS fecha_comentario,
+            u.nombre AS nombre_usuario_comentario
+
+        FROM
+            COMPARTIR_HORARIO ch
+            JOIN HORARIOS_USUARIOS hu ON ch.id_horario = hu.id
+            JOIN MATERIAS m ON hu.id = m.id_horario
+            LEFT JOIN DETALLES_MATERIAS dm ON m.id = dm.id_materia
+            JOIN HORARIOS h ON m.id = h.id_materia
+            LEFT JOIN DETALLES_HORARIOS dh ON h.id = dh.id_horario
+            LEFT JOIN COMENTARIOS_HORARIO chc ON hu.id = chc.id_horario
+            LEFT JOIN USUARIOS u ON chc.id_usuario = u.id
+        WHERE
+            ch.url_acesso = {url}
+    """
+
+    CAMPOS = [
+        'url_compartido',
+        'nombre_horario',
+        'nombre_materia',
+        'color_materia',
+        'descripcion_materia',
+        'mostrar_detalle_materia',
+        'dia_horario',
+        'hora_inicio',
+        'hora_fin',
+        'descripcion_horario',
+        'mostrar_detalle_horario',
+        'comentario_horario',
+        'fecha_comentario',
+        'nombre_usuario_comentario'
+    ]
+
+    try:
+        with pool.acquire() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(QUERY)
+                data = cursor.fetchall()
+                data = [{k: v for k, v in zip(CAMPOS, row)} for row in data]
+                return transformar_datos(data)
+
+    except oracledb.Error as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {e}")
+
+
+@app.get('/operacion/eliminarRol/{rolId}', tags=["Operaciones"])
+def eliminar_rol(rolId: int):
+    return template_execute(f"""
+        BEGIN
+            -- Iniciar la transacción
+            SAVEPOINT inicio_transaccion;
+                            
+            -- 1. Eliminar detalles de horarios relacionados con el rol
+            DELETE FROM DETALLES_HORARIOS
+            WHERE id_horario IN (
+                SELECT h.id
+                FROM HORARIOS h
+                JOIN MATERIAS m ON h.id_materia = m.id
+                JOIN HORARIOS_USUARIOS hu ON m.id_horario = hu.id
+                JOIN USUARIOS u ON hu.id_usuario = u.id
+                WHERE u.id_rol = {rolId}
+            );
+
+            -- 2. Eliminar horarios relacionados con el rol
+            DELETE FROM HORARIOS
+            WHERE id_materia IN (
+                SELECT m.id
+                FROM MATERIAS m
+                JOIN HORARIOS_USUARIOS hu ON m.id_horario = hu.id
+                JOIN USUARIOS u ON hu.id_usuario = u.id
+                WHERE u.id_rol = {rolId}
+            );
+
+            -- 3. Eliminar detalles de materias relacionados con el rol
+            DELETE FROM DETALLES_MATERIAS
+            WHERE id_materia IN (
+                SELECT m.id
+                FROM MATERIAS m
+                JOIN HORARIOS_USUARIOS hu ON m.id_horario = hu.id
+                JOIN USUARIOS u ON hu.id_usuario = u.id
+                WHERE u.id_rol = {rolId}
+            );
+
+            -- 4. Eliminar materias relacionadas con el rol
+            DELETE FROM MATERIAS
+            WHERE id_horario IN (
+                SELECT hu.id
+                FROM HORARIOS_USUARIOS hu
+                JOIN USUARIOS u ON hu.id_usuario = u.id
+                WHERE u.id_rol = {rolId}
+            );
+
+            -- 5. Eliminar compartir horario relacionados con el rol
+            DELETE FROM COMPARTIR_HORARIO
+            WHERE id_horario IN (
+                SELECT hu.id
+                FROM HORARIOS_USUARIOS hu
+                JOIN USUARIOS u ON hu.id_usuario = u.id
+                WHERE u.id_rol = {rolId}
+            );
+
+            -- 6. Eliminar comentarios de horario relacionados con el rol
+            DELETE FROM COMENTARIOS_HORARIO
+            WHERE id_horario IN (
+                SELECT hu.id
+                FROM HORARIOS_USUARIOS hu
+                JOIN USUARIOS u ON hu.id_usuario = u.id
+                WHERE u.id_rol = {rolId}
+            );
+
+            -- 7. Eliminar horarios de usuarios relacionados con el rol
+            DELETE FROM HORARIOS_USUARIOS
+            WHERE id_usuario IN (
+                SELECT u.id
+                FROM USUARIOS u
+                WHERE u.id_rol = {rolId}
+            );
+
+            -- 8. Eliminar usuarios relacionados con el rol
+            DELETE FROM USUARIOS
+            WHERE id_rol = {rolId};
+
+            -- 9. Eliminar permisos relacionados con el rol
+            DELETE FROM PERMISOS
+            WHERE id_rol = {rolId};
+
+            -- 10. Finalmente, eliminar el rol
+            DELETE FROM ROLES
+            WHERE id = {rolId};
+
+            -- Confirmar la transacción si todo fue exitoso
+            COMMIT;
+        EXCEPTION
+            WHEN OTHERS THEN
+                -- Si ocurre algún error, deshacer todos los cambios
+                ROLLBACK TO inicio_transaccion;
+                RAISE;  -- Relanzar la excepción para notificar el error
+        END;
+    """)
 
 #
 # ROLES

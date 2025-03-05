@@ -127,13 +127,12 @@ INSERT INTO DETALLES_HORARIOS (id_horario, descripcion, mostrar) VALUES (1, 'Cla
 INSERT INTO DETALLES_HORARIOS (id_horario, descripcion, mostrar) VALUES (2, 'Clase en Aula 202', 1);
 
 -- Insertar compartir horario
-INSERT INTO COMPARTIR_HORARIO (url_acesso, id_horario) VALUES ('https://mis-horarios.com/juan', 1);
-INSERT INTO COMPARTIR_HORARIO (url_acesso, id_horario) VALUES ('https://mis-horarios.com/ana', 2);
+INSERT INTO COMPARTIR_HORARIO (url_acesso, id_horario) VALUES ('juan', 1);
+INSERT INTO COMPARTIR_HORARIO (url_acesso, id_horario) VALUES ('ana', 2);
 
 -- Insertar comentarios sobre horarios
 INSERT INTO COMENTARIOS_HORARIO (id_horario, id_usuario, comentario, publicado) VALUES (1, 3, 'Muy buena clase de matemáticas', SYSDATE);
 INSERT INTO COMENTARIOS_HORARIO (id_horario, id_usuario, comentario, publicado) VALUES (2, 3, 'La historia es interesante', SYSDATE);
-
 
 CREATE OR REPLACE FUNCTION obtener_horario(p_url_acesso VARCHAR2)
 RETURN SYS_REFCURSOR IS
@@ -158,3 +157,95 @@ BEGIN
     
     RETURN v_cursor;
 END obtener_horario;
+
+-- Operación Eliminar Rol
+BEGIN
+    -- Iniciar la transacción
+    SAVEPOINT inicio_transaccion;
+
+    -- 1. Eliminar detalles de horarios relacionados con el rol
+    DELETE FROM DETALLES_HORARIOS
+    WHERE id_horario IN (
+        SELECT h.id
+        FROM HORARIOS h
+        JOIN MATERIAS m ON h.id_materia = m.id
+        JOIN HORARIOS_USUARIOS hu ON m.id_horario = hu.id
+        JOIN USUARIOS u ON hu.id_usuario = u.id
+        WHERE u.id_rol = :rol_id
+    );
+
+    -- 2. Eliminar horarios relacionados con el rol
+    DELETE FROM HORARIOS
+    WHERE id_materia IN (
+        SELECT m.id
+        FROM MATERIAS m
+        JOIN HORARIOS_USUARIOS hu ON m.id_horario = hu.id
+        JOIN USUARIOS u ON hu.id_usuario = u.id
+        WHERE u.id_rol = :rol_id
+    );
+
+    -- 3. Eliminar detalles de materias relacionados con el rol
+    DELETE FROM DETALLES_MATERIAS
+    WHERE id_materia IN (
+        SELECT m.id
+        FROM MATERIAS m
+        JOIN HORARIOS_USUARIOS hu ON m.id_horario = hu.id
+        JOIN USUARIOS u ON hu.id_usuario = u.id
+        WHERE u.id_rol = :rol_id
+    );
+
+    -- 4. Eliminar materias relacionadas con el rol
+    DELETE FROM MATERIAS
+    WHERE id_horario IN (
+        SELECT hu.id
+        FROM HORARIOS_USUARIOS hu
+        JOIN USUARIOS u ON hu.id_usuario = u.id
+        WHERE u.id_rol = :rol_id
+    );
+
+    -- 5. Eliminar compartir horario relacionados con el rol
+    DELETE FROM COMPARTIR_HORARIO
+    WHERE id_horario IN (
+        SELECT hu.id
+        FROM HORARIOS_USUARIOS hu
+        JOIN USUARIOS u ON hu.id_usuario = u.id
+        WHERE u.id_rol = :rol_id
+    );
+
+    -- 6. Eliminar comentarios de horario relacionados con el rol
+    DELETE FROM COMENTARIOS_HORARIO
+    WHERE id_horario IN (
+        SELECT hu.id
+        FROM HORARIOS_USUARIOS hu
+        JOIN USUARIOS u ON hu.id_usuario = u.id
+        WHERE u.id_rol = :rol_id
+    );
+
+    -- 7. Eliminar horarios de usuarios relacionados con el rol
+    DELETE FROM HORARIOS_USUARIOS
+    WHERE id_usuario IN (
+        SELECT u.id
+        FROM USUARIOS u
+        WHERE u.id_rol = :rol_id
+    );
+
+    -- 8. Eliminar usuarios relacionados con el rol
+    DELETE FROM USUARIOS
+    WHERE id_rol = :rol_id;
+
+    -- 9. Eliminar permisos relacionados con el rol
+    DELETE FROM PERMISOS
+    WHERE id_rol = :rol_id;
+
+    -- 10. Finalmente, eliminar el rol
+    DELETE FROM ROLES
+    WHERE id = :rol_id;
+
+    -- Confirmar la transacción si todo fue exitoso
+    COMMIT;
+EXCEPTION
+    WHEN OTHERS THEN
+        -- Si ocurre algún error, deshacer todos los cambios
+        ROLLBACK TO inicio_transaccion;
+        RAISE;  -- Relanzar la excepción para notificar el error
+END;

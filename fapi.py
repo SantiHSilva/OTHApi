@@ -165,17 +165,22 @@ def transformar_datos(datos):
             resultado[url]["comentarios"].append(comentario)
         
         # Clave única para la materia
-        clave_materia = (url, item["nombre_materia"])
+        clave_materia = (url, item["id_materia"])
         if clave_materia not in materias_dict:
             materia = {
+                "id": item["id_materia"],
                 "nombre": item["nombre_materia"],
                 "color": item["color_materia"].lower(),
-                "descripciones": [{
-                    "descripcion": item["descripcion_materia"],
-                    "mostrar": item["mostrar_detalle_materia"]
-                }],
+                "descripciones": [],
                 "horarios": []
             }
+
+            if item["descripcion_materia"]:
+                materia["descripciones"].append({
+                    "descripcion": item["descripcion_materia"],
+                    "mostrar": item["mostrar_detalle_materia"]
+                })
+
             materias_dict[clave_materia] = materia
             resultado[url]["materias"].append(materia)
         
@@ -183,6 +188,7 @@ def transformar_datos(datos):
         clave_horario = (clave_materia, item["id_horario"])
         if clave_horario not in horarios_dict:
             horario = {
+                "id": item["id_horario"],
                 "dia": item["dia_horario"],
                 "hora_inicio": item["hora_inicio"],
                 "hora_fin": item["hora_fin"],
@@ -207,6 +213,7 @@ def obtener_horario(url: str):
             hu.nombre AS nombre_horario,
 
             -- Información de las materias
+            m.id AS id_materia,
             m.nombre AS nombre_materia,
             m.color AS color_materia,
             dm.descripcion AS descripcion_materia,
@@ -241,6 +248,7 @@ def obtener_horario(url: str):
     CAMPOS = [
         'url_compartido',
         'nombre_horario',
+        'id_materia',
         'nombre_materia',
         'color_materia',
         'descripcion_materia',

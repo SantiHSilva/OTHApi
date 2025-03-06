@@ -116,6 +116,7 @@ def template_update(table, data, where):
     try:
         set = ', '.join([f"{k} = :{i + 1}" for i, k in enumerate(data.keys())])
         with pool.acquire() as connection:
+            connection.autocommit = True
             with connection.cursor() as cursor:
                 cursor.execute(f"UPDATE {table} SET {set} WHERE {where}", tuple(data.values()))
     except oracledb.Error as e:
@@ -124,19 +125,23 @@ def template_update(table, data, where):
 def template_delete(table, where):
     try:
         with pool.acquire() as connection:
+            connection.autocommit = True
             with connection.cursor() as cursor:
                 cursor.execute(f"DELETE FROM {table} WHERE {where}")
             return {"message": "Record deleted"}
     except oracledb.Error as e:
         raise HTTPException(status_code=500, detail=f"Database error: {e}")
 
-def template_execute(query, getting = False):
+def template_execute(query):
     try:
         with pool.acquire() as connection:
+            connection.autocommit = True
             with connection.cursor() as cursor:
                 cursor.execute(query)
-                if(getting):
-                    return cursor.fetchall()
+
+                #commitear
+                connection.commit()
+
                 return {"message": "Query executed"}
     except oracledb.Error as e:
         raise HTTPException(status_code=500, detail=f"Database error: {e}")
@@ -383,7 +388,7 @@ def eliminar_rol(rolId: int):
             WHEN OTHERS THEN
                 -- Si ocurre algún error, deshacer todos los cambios
                 ROLLBACK TO inicio_transaccion;
-                RAISE;  -- Relanzar la excepción para notificar el error
+                RAISE;  -- Relanzar la excepción para notificar el error
         END;
     """)
 

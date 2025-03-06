@@ -95,44 +95,86 @@ CREATE TABLE COMENTARIOS_HORARIO (
 INSERT INTO ROLES (nombre) VALUES ('Administrador');
 INSERT INTO ROLES (nombre) VALUES ('Profesor');
 INSERT INTO ROLES (nombre) VALUES ('Estudiante');
+INSERT INTO ROLES (nombre) VALUES ('Invitado');
+INSERT INTO ROLES (nombre) VALUES ('Otro');
 
 -- Insertar permisos
 INSERT INTO PERMISOS (id_rol, leer, escribir, eliminar, modificar, tabla) VALUES (1, 1, 1, 1, 1, 'USUARIOS');
 INSERT INTO PERMISOS (id_rol, leer, escribir, eliminar, modificar, tabla) VALUES (2, 1, 1, 0, 1, 'MATERIAS');
 INSERT INTO PERMISOS (id_rol, leer, escribir, eliminar, modificar, tabla) VALUES (3, 1, 0, 0, 0, 'HORARIOS');
+INSERT INTO PERMISOS (id_rol, leer, escribir, eliminar, modificar, tabla) VALUES (4, 0, 0, 0, 0, 'DETALLES_MATERIAS');
+INSERT INTO PERMISOS (id_rol, leer, escribir, eliminar, modificar, tabla) VALUES (5, 0, 0, 0, 0, 'DETALLES_HORARIOS');
 
 -- Insertar usuarios
 INSERT INTO USUARIOS (id_rol, nombre, email, contrasena) VALUES (1, 'Admin', 'admin@email.com', 'admin123');
 INSERT INTO USUARIOS (id_rol, nombre, email, contrasena) VALUES (2, 'Profesor Juan', 'juan@email.com', 'profesor123');
 INSERT INTO USUARIOS (id_rol, nombre, email, contrasena) VALUES (3, 'Estudiante Ana', 'ana@email.com', 'estudiante123');
+INSERT INTO USUARIOS (id_rol, nombre, email, contrasena) VALUES (4, 'Invitado', 'invitado@email.com', 'invitado123');
+INSERT INTO USUARIOS (id_rol, nombre, email, contrasena) VALUES (5, 'Otro', 'otro@email.com', 'otro123');
 
 -- Insertar horarios de usuarios
 INSERT INTO HORARIOS_USUARIOS (id_usuario, nombre) VALUES (2, 'Horario Profesor Juan');
 INSERT INTO HORARIOS_USUARIOS (id_usuario, nombre) VALUES (3, 'Horario Estudiante Ana');
+INSERT INTO HORARIOS_USUARIOS (id_usuario, nombre) VALUES (3, 'Horario Estudiante Mateo');
+INSERT INTO HORARIOS_USUARIOS (id_usuario, nombre) VALUES (4, 'Horario Invitado');
+INSERT INTO HORARIOS_USUARIOS (id_usuario, nombre) VALUES (5, 'Horario Otro');
 
 -- Insertar materias
-INSERT INTO MATERIAS (id_horario, nombre, color) VALUES (1, 'Matemáticas', 'Azul');
+INSERT INTO MATERIAS (id_horario, nombre, color) VALUES (2, 'Matemáticas', 'Azul');
 INSERT INTO MATERIAS (id_horario, nombre, color) VALUES (2, 'Historia', 'Rojo');
+INSERT INTO MATERIAS (id_horario, nombre, color) VALUES (2, 'Álgebra', 'Verde');
+INSERT INTO MATERIAS (id_horario, nombre, color) VALUES (2, 'Historia Universal', 'Amarillo');
+INSERT INTO MATERIAS (id_horario, nombre, color) VALUES (2, 'Geografía', 'Naranja');
 
 -- Insertar detalles de materias
 INSERT INTO DETALLES_MATERIAS (id_materia, descripcion, mostrar) VALUES (1, 'Álgebra y Cálculo', 1);
 INSERT INTO DETALLES_MATERIAS (id_materia, descripcion, mostrar) VALUES (2, 'Historia Universal', 1);
+INSERT INTO DETALLES_MATERIAS (id_materia, descripcion, mostrar) VALUES (3, 'Ecuaciones y desigualdades', 1);
+INSERT INTO DETALLES_MATERIAS (id_materia, descripcion, mostrar) VALUES (4, 'Historia de la humanidad', 1);
+INSERT INTO DETALLES_MATERIAS (id_materia, descripcion, mostrar) VALUES (5, 'Estudio de la tierra', 1);
 
 -- Insertar horarios
 INSERT INTO HORARIOS (id_materia, dia, hora_incio, hora_fin) VALUES (1, 'L', '08:00', '10:00');
 INSERT INTO HORARIOS (id_materia, dia, hora_incio, hora_fin) VALUES (2, 'M', '10:00', '12:00');
+INSERT INTO HORARIOS (id_materia, dia, hora_incio, hora_fin) VALUES (1, 'M', '14:00', '16:00');
+INSERT INTO HORARIOS (id_materia, dia, hora_incio, hora_fin) VALUES (3, 'J', '16:00', '18:00');
+INSERT INTO HORARIOS (id_materia, dia, hora_incio, hora_fin) VALUES (4, 'V', '18:00', '20:00');
 
 -- Insertar detalles de horarios
 INSERT INTO DETALLES_HORARIOS (id_horario, descripcion, mostrar) VALUES (1, 'Clase en Aula 101', 1);
 INSERT INTO DETALLES_HORARIOS (id_horario, descripcion, mostrar) VALUES (2, 'Clase en Aula 202', 1);
+INSERT INTO DETALLES_HORARIOS (id_horario, descripcion, mostrar) VALUES (3, 'Clase en Aula 303', 1);
+INSERT INTO DETALLES_HORARIOS (id_horario, descripcion, mostrar) VALUES (4, 'Clase en Aula 404', 1);
+INSERT INTO DETALLES_HORARIOS (id_horario, descripcion, mostrar) VALUES (5, 'Clase en Aula 505', 1);
 
 -- Insertar compartir horario
 INSERT INTO COMPARTIR_HORARIO (url_acesso, id_horario) VALUES ('juan', 1);
 INSERT INTO COMPARTIR_HORARIO (url_acesso, id_horario) VALUES ('ana', 2);
+INSERT INTO COMPARTIR_HORARIO (url_acesso, id_horario) VALUES ('mateo', 3);
+INSERT INTO COMPARTIR_HORARIO (url_acesso, id_horario) VALUES ('invitado', 4);
+INSERT INTO COMPARTIR_HORARIO (url_acesso, id_horario) VALUES ('otro', 5);
 
 -- Insertar comentarios sobre horarios
-INSERT INTO COMENTARIOS_HORARIO (id_horario, id_usuario, comentario, publicado) VALUES (1, 3, 'Muy buena clase de matemáticas', SYSDATE);
+INSERT INTO COMENTARIOS_HORARIO (id_horario, id_usuario, comentario, publicado) VALUES (2, 3, 'Muy buena clase de matemáticas', SYSDATE);
 INSERT INTO COMENTARIOS_HORARIO (id_horario, id_usuario, comentario, publicado) VALUES (2, 3, 'La historia es interesante', SYSDATE);
+INSERT INTO COMENTARIOS_HORARIO (id_horario, id_usuario, comentario, publicado) VALUES (3, 3, 'Excelente clase de álgebra', SYSDATE);
+INSERT INTO COMENTARIOS_HORARIO (id_horario, id_usuario, comentario, publicado) VALUES (4, 3, 'Historia universal es fascinante', SYSDATE);
+INSERT INTO COMENTARIOS_HORARIO (id_horario, id_usuario, comentario, publicado) VALUES (5, 3, 'Geografía es muy importante', SYSDATE);
+
+CREATE OR REPLACE FUNCTION rol_existe(p_id NUMBER)
+RETURN NUMBER IS
+    v_count NUMBER;
+BEGIN
+    SELECT COUNT(1)
+    INTO v_count
+    FROM ROLES
+    WHERE id = p_id;
+
+    RETURN CASE WHEN v_count > 0 THEN 1 ELSE 0 END;
+END rol_existe;
+
+-- Llamarlo con un ID de rol
+SELECT rol_existe(1) FROM DUAL;
 
 CREATE OR REPLACE FUNCTION obtener_horario(p_url_acesso VARCHAR2)
 RETURN SYS_REFCURSOR IS

@@ -277,6 +277,23 @@ def obtener_horario(url: str):
 
 @app.delete('/operacion/eliminarRol/{rolId}', tags=["Operaciones"])
 def eliminar_rol(rolId: int):
+
+    can_continue = False
+
+    # Verificar si el rol existe
+
+    try:
+        with pool.acquire() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(f"SELECT PAPU.rol_existe({rolId}) FROM DUAL")
+                data = cursor.fetchone()[0]
+                can_continue = data == 1
+    except oracledb.Error as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {e}")
+
+    if not can_continue:
+        raise HTTPException(status_code=404, detail=f"Rol {rolId} not found")
+
     return template_execute(f"""
         BEGIN
             -- Iniciar la transacción

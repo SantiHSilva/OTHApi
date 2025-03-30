@@ -1,0 +1,106 @@
+/// Define los permisos de acceso a las tablas para cada rol.
+model Permisos {
+  id        Int     @id @default(autoincrement())
+  /// Nombre de la tabla a la que aplica el permiso.
+  tabla     String  @db.VarChar(100)
+  /// Indica si el rol tiene permiso para agregar registros.
+  agregar   Boolean @default(false)
+  /// Indica si el rol tiene permiso para modificar registros.
+  modificar Boolean @default(false)
+  /// Indica si el rol tiene permiso para eliminar registros.
+  eliminar  Boolean @default(false)
+  /// Indica si el rol tiene permiso para leer registros.
+  leer      Boolean @default(false)
+  /// Referencia al rol asociado a estos permisos.
+  rol_id    Int
+
+  deleted_at DateTime?
+
+  Roles Roles @relation(fields: [rol_id], references: [id])
+}
+
+/// Contiene los diferentes roles que pueden ser asignados a los usuarios.
+model Roles {
+  id          Int    @id @default(autoincrement())
+  /// Nombre o descripción del rol (ej. Administrador, Usuario).
+  descripcion String @db.VarChar(50)
+
+  deleted_at DateTime?
+
+  Permisos Permisos[]
+  Usuarios Usuarios[]
+}
+
+/// Esta tabla almacena la información básica de las personas registradas en el sistema.
+model Personas {
+  id Int @id @default(autoincrement())
+
+  /// Nombres completos de la persona.
+  nombres String @db.VarChar(100)
+
+  /// Apellidos completos de la persona.
+  apellidos String @db.VarChar(100)
+
+  /// Referencia al sexo biológico de la persona, según tabla Sexos.
+  sexo Boolean
+
+  /// Número de teléfono de contacto.
+  telefono String? @db.VarChar(20)
+
+  /// Dirección de notificación para correspondencias oficiales.
+  direccion_notificacion String? @db.VarChar(150)
+
+  /// Dirección residencial del ciudadano.
+  direccion_domicilio String? @db.VarChar(150)
+
+  /// Referencia a la nacionalidad de la persona.
+  nacionalidad_id Int
+
+  deleted_at DateTime?
+
+  Nacionalidad Paises @relation(fields: [nacionalidad_id], references: [id])
+
+  Usuarios     Usuarios[]
+}
+
+/// Tabla que almacena los datos de acceso de los usuarios al sistema, así como su rol asignado.
+model Usuarios {
+  id         Int     @id @default(autoincrement())
+  /// Correo electrónico utilizado para autenticación.
+  correo     String  @unique @db.VarChar(100)
+  /// Contraseña encriptada del usuario.
+  password   String  @db.VarChar(255)
+  /// Campo que indica si el correo fue verificado
+  verificado Boolean @default(false)
+  /// Referencia a la persona asociada al usuario.
+  persona_id Int
+  /// Referencia al rol asignado al usuario.
+  rol_id     Int
+
+  deleted_at DateTime?
+
+  Personas Personas @relation(fields: [persona_id], references: [id])
+  Roles    Roles    @relation(fields: [rol_id], references: [id])
+
+  OAuthGoogle                         OAuthGoogle[]
+}
+
+/// Lista de tokens JWT que han sido revocados o han expirado, impidiendo su reutilización para autenticación.
+model JWTBlacklist {
+  id         Int      @id @default(autoincrement())
+  /// Token de acceso a la API.
+  token      String   @db.Text
+  /// Fecha de expiración del token.
+  expiracion DateTime @db.Timestamp()
+}
+
+/// Tabla que almacena la información de autenticación de los usuarios mediante OAuth de Google.
+model OAuthGoogle {
+  id         Int    @id @default(autoincrement())
+  /// ID de Google asociado al usuario.
+  google_id  String @unique @db.VarChar(100)
+  /// Referencia al usuario asociado a la cuenta de Google.
+  usuario_id Int
+
+  Usuarios Usuarios @relation(fields: [usuario_id], references: [id])
+}

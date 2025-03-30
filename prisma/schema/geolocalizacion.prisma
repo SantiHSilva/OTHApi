@@ -1,0 +1,43 @@
+/// Tabla que almacena los países según el código ISO 3166-1 alpha-2.
+model Paises {
+  id          Int    @id @default(autoincrement())
+  /// Código de país según ISO 3166-1 alpha-2.
+  codigo      String @db.VarChar(10)
+  /// Nombre oficial del país.
+  descripcion String @db.VarChar(100)
+
+  deleted_at DateTime?
+
+  Personas      Personas[]
+  Departamentos Departamentos[]
+}
+
+model Departamentos {
+  id          Int    @id @default(autoincrement())
+  /// Código de departamento según el DANE.
+  codigo      String @db.VarChar(10)
+  /// Nombre del departamento.
+  descripcion String @db.VarChar(100)
+  /// Referencia al país al que pertenece el departamento.
+  pais_id     Int
+
+  deleted_at DateTime?
+
+  Paises Paises @relation(fields: [pais_id], references: [id])
+
+  Ciudades Ciudades[]
+}
+
+model Ciudades {
+  id              Int    @id @default(autoincrement())
+  /// Código de ciudad según el DANE.
+  codigo          String @db.VarChar(10)
+  /// Nombre de la ciudad.
+  descripcion     String @db.VarChar(100)
+  /// Referencia al departamento al que pertenece la ciudad.
+  departamento_id Int
+
+  deleted_at DateTime?
+
+  Departamentos Departamentos @relation(fields: [departamento_id], references: [id])
+}

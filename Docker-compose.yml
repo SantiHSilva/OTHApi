@@ -1,0 +1,40 @@
+services:
+  db-observatorio:
+    image: postgres:15.8-alpine3.20
+    container_name: db-postgresql-observatorio
+    networks:
+      - app-net-observatorio
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=Lasupermegahipersecreta12345
+      - POSTGRES_DB=observatorio
+    ports:
+      - '27850:5432'
+    volumes:
+      - db-observatorio:/var/opt/mssql/
+
+  backend-observatorio-nestjs:
+    container_name: backend-observatorio
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    networks:
+      - app-net-observatorio
+    ports:
+      - '27845:3000'
+    depends_on:
+      - db-observatorio
+    env_file:
+      - .env
+    volumes:
+      - ./uploads:/backend/uploads
+      - ./backups:/backend/backups
+      - ./logs:/backend/logs
+
+networks:
+  app-net-observatorio:
+    driver: bridge
+volumes:
+  db-observatorio:
+    driver: local

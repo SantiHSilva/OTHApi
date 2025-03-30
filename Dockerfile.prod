@@ -1,0 +1,20 @@
+FROM node:20.16.0-alpine3.20
+
+# Para los backups en alpine..
+RUN apk update && apk add postgresql-client
+
+# directorio de trabajo
+WORKDIR /backend
+
+# Copiar package.json y package-lock.json
+COPY . .
+
+# Instalar dependencias
+RUN npm install
+
+# copia de los archivos del proyecto al directorio de trabajo
+
+EXPOSE 3000
+
+# Command to run the app
+CMD [  "npm", "run", "start:prod:docker" ]

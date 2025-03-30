@@ -1,0 +1,12 @@
+{
+    "typescript.tsdk": "node_modules\\typescript\\lib",
+    "explorer.fileNesting.enabled": true,
+    "explorer.fileNesting.patterns": {
+        "package.json": "package-lock.json, yarn.lock, pnpm-lock.yaml, bun.lockb, .bash_profile, .gitignore, jest.config.js, tsconfig.json, .eslintrc.js, .prettierrc.js, .prettierrc, nest-cli.json",
+        "Dockerfile.prod": "docker-compose.yml, .env.docker, .dockerignore, comandos.md",
+    },
+    "editor.tabSize": 2,
+    "editor.codeActionsOnSave": {
+        "source.fixAll.eslint": "always"
+    },
+}

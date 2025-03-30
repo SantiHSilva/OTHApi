@@ -83,6 +83,8 @@ model Usuarios {
   Roles    Roles    @relation(fields: [rol_id], references: [id])
 
   OAuthGoogle                         OAuthGoogle[]
+  HorariosUsuarios                    HorariosUsuarios[]
+  ComentariosHorario                  ComentariosHorario[]
 }
 
 /// Lista de tokens JWT que han sido revocados o han expirado, impidiendo su reutilización para autenticación.

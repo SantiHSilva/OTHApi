@@ -1,0 +1,89 @@
+model HorariosUsuarios{
+  id Int @id @default(autoincrement())
+
+  nombre String @db.Text()
+  color String @db.VarChar(15)
+
+  usuario_id Int
+  deleted_at DateTime?
+
+  Usuarios Usuarios @relation(fields: [usuario_id], references: [id])
+  
+  CompartirHorario CompartirHorario[]
+  ComentariosHorario ComentariosHorario[]
+  Materias Materias[]
+}
+
+model CompartirHorario{
+  id Int @id @default(autoincrement())
+
+  url String @db.Text()
+  horario_id Int
+  deleted_at DateTime?
+
+  HorariosUsuarios HorariosUsuarios @relation(fields: [horario_id], references: [id])
+}
+
+model ComentariosHorario{
+  id Int @id @default(autoincrement())
+
+  comentario String @db.Text()
+  fecha DateTime @db.Timestamp()
+
+  usuario_id Int
+  horario_id Int
+  deleted_at DateTime?
+
+  Usuarios Usuarios @relation(fields: [usuario_id], references: [id])
+  HorariosUsuarios HorariosUsuarios @relation(fields: [horario_id], references: [id])
+}
+
+model Materias{
+  id Int @id @default(autoincrement())
+
+  nombre String @db.Text()
+  id_horario Int
+  deleted_at DateTime?
+
+  HorariosUsuarios HorariosUsuarios @relation(fields: [id_horario], references: [id])
+
+  HorariosMaterias HorariosMaterias[]
+  DetallesMaterias DetallesMaterias[]
+}
+
+model DetallesMaterias{
+  id Int @id @default(autoincrement())
+
+  id_materia Int
+  descripcion String @db.Text()
+  mostrar Boolean @default(true)
+  deleted_at DateTime?
+
+  Materias Materias @relation(fields: [id_materia], references: [id])
+}
+
+model HorariosMaterias{
+  id Int @id @default(autoincrement())
+
+  id_materia Int
+  dia String @db.VarChar(1) // Indice del día.
+  hora_inicio DateTime @db.Timestamp()
+  hora_fin DateTime @db.Timestamp()
+
+  deleted_at DateTime?
+
+  Materias Materias @relation(fields: [id_materia], references: [id])
+
+  DetallesHorariosMaterias DetallesHorariosMaterias[]
+}
+
+model DetallesHorariosMaterias{
+  id Int @id @default(autoincrement())
+
+  id_horario_materia Int
+  descripcion String @db.Text()
+  mostrar Boolean @default(true)
+  deleted_at DateTime?
+
+  HorariosMaterias HorariosMaterias @relation(fields: [id_horario_materia], references: [id])
+}

@@ -12,12 +12,14 @@ import { PrismaService } from './prisma/prisma.service';
 import { GeolocalizacionModule } from './context/Geolocalización/geolocalizacion.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { TasksService } from './tasks/taskService.service';
+import { OTHModule } from './context/OTH/OTH.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot(), // Configuración de variables de entorno
     ScheduleModule.forRoot(), // Programación de tareas, BACKUPs en este caso.
     PrismaModule,
+    OTHModule,
     AuthModule,
     GeolocalizacionModule,
   ],
@@ -30,10 +32,10 @@ import { TasksService } from './tasks/taskService.service';
       useClass: AuthGuard,
     },
     // Hacer que los Endpoints estén protegidos por el guard de permisos
-    {
-      provide: APP_GUARD,
-      useClass: PermisosGuard,
-    },
+    // {
+    //   provide: APP_GUARD,
+    //   useClass: PermisosGuard,
+    // },
   ],
 })
 

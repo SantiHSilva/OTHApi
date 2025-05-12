@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from 'src/prisma/prisma.service';
 
-const accessTokenExpiresIn = '1h';
+const accessTokenExpiresIn = '7d';
 const refreshTokenExpiresIn = '7d';
 
 @Injectable()

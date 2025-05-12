@@ -2,7 +2,7 @@ model HorariosUsuarios{
   id Int @id @default(autoincrement())
 
   nombre String @db.Text()
-  color String @db.VarChar(15)
+  descripcion String @db.Text()
 
   usuario_id Int
   deleted_at DateTime?
@@ -17,8 +17,8 @@ model HorariosUsuarios{
 model CompartirHorario{
   id Int @id @default(autoincrement())
 
-  url String @db.Text()
-  horario_id Int
+  url String @db.Text() @unique
+  horario_id Int @unique
   deleted_at DateTime?
 
   HorariosUsuarios HorariosUsuarios @relation(fields: [horario_id], references: [id])
@@ -42,6 +42,7 @@ model Materias{
   id Int @id @default(autoincrement())
 
   nombre String @db.Text()
+  color String @db.VarChar(15)
   id_horario Int
   deleted_at DateTime?
 

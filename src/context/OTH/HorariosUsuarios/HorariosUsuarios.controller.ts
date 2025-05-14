@@ -10,7 +10,7 @@ import {
   Request as JWT,
 } from '@nestjs/common';
 import { HorariosUsuariosService } from './HorariosUsuarios.service';
-import { CompartirHorario, HorariosUsuarios } from './HorariosUsuarios.model';
+import { CompartirHorario, Horario, HorariosUsuarios } from './HorariosUsuarios.model';
 import { ApiBearerAuth, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { Request } from 'express';
 import {
@@ -41,6 +41,23 @@ export class HorariosUsuariosController {
     );
   }
 
+  @Get('/get/:horarioId')
+  async getById(@Param('horarioId') horarioId: string, @JWT() req) {
+    const idUser = req.user.idUser;
+    return this.service.getDetailsSchedule(Number(horarioId), idUser);
+  }
+
+  @Post('/save/:horarioId')
+  async saveSchedule(
+    @Param('horarioId') horarioId: string,
+    @Body() data: Horario[],
+    @JWT() req
+  ) {
+    const idUser = req.user.idUser;
+    console.log(data);
+    return this.service.saveSchedule(idUser, Number(horarioId), data);
+  }
+
   @Post()
   async create(@Body() data: HorariosUsuarios, @JWT() req) {
     const idUser = req.user.idUser;
@@ -56,7 +73,7 @@ export class HorariosUsuariosController {
   @Delete(':id')
   async delete(@Param('id') id: string, @JWT() req ) {
     const idUser = req.user.idUser;
-    return this.service.delete(Number(id));
+    return this.service.deleteByUser(Number(id), idUser);
   }
 
   @Post('/share')

@@ -68,8 +68,8 @@ model HorariosMaterias{
 
   id_materia Int
   dia String @db.VarChar(1) // Indice del día.
-  hora_inicio DateTime @db.Timestamp()
-  hora_fin DateTime @db.Timestamp()
+  hora_inicio String @db.VarChar(5) // Formato 24 horas.
+  hora_fin String @db.VarChar(5) // Formato 24 horas.
 
   deleted_at DateTime?
 

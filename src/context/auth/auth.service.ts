@@ -465,7 +465,11 @@ export class AuthService {
       return this.jwt.generateToken(user.id);
     }
 
-    throw new ConflictException('Usuario no encontrado');
+    return await this.OAuthGoogleRegister({
+      idToken: data.idToken,
+      sexo: true,
+      nacionalidad_id: 42, // Asignar una nacionalidad por defecto
+    })
   }
 
   async OAuthGoogleRegister(data: GoogleAccessTokenRegister) {

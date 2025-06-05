@@ -34,6 +34,18 @@ export class HorariosUsuariosController {
     );
   }
 
+  @Get('/mySchedules')
+  @ApiQuery(INCLUDEDELETEDPARAM)
+  async getAllByUser(
+    @Req() request: Request, @JWT() req
+  ) {
+    const idUser = req.user.idUser;
+    return this.service.getAllDetail(
+      request.query.includeDeleted === 'true',
+      Number(idUser),
+    );
+  }
+
   @Get('/get/:horarioId')
   async getById(@Param('horarioId') horarioId: string, @JWT() req) {
     const idUser = req.user.idUser;

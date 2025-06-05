@@ -248,6 +248,32 @@ await this.prisma.$transaction(async (prisma) => {
     }
   }
 
+  async getAllDetail(includeDeleted: boolean, idUser: number) {
+    const isDeletedIncluded = includeDeleted ? {} : { deleted_at: null };
+    const data = (await this.prisma.horariosUsuarios.findMany({
+      where: { ...isDeletedIncluded, usuario_id: idUser },
+      include: {
+        ComentariosHorario: true,
+        CompartirHorario: {
+          select: {
+            url: true,
+          }
+        },
+        Materias: {
+          include: {
+            HorariosMaterias: true
+          }
+        }
+      }
+    })).map((horario) => {
+      return {
+        ...horario,
+        CompartirHorario: horario.CompartirHorario.length ? horario.CompartirHorario[0].url : null,
+      }
+    })
+    return data;
+  }
+
   async getPaginatedByUser(page: number, itemsPerPage: number, includeDeleted: boolean, idUser: number) {
     const isDeletedIncluded = includeDeleted ? {} : { deleted_at: null };
     const data = (await this.prisma.horariosUsuarios.findMany({

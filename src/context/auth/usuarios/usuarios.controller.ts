@@ -71,4 +71,9 @@ export class UsuariosController {
   async delete(@Param('id') id: string) {
     return this.service.delete(Number(id));
   }
+
+  @Post('/restore/:id')
+  async restore(@Param('id') id ) {
+    return this.service.restore(Number(id));
+  }
 }

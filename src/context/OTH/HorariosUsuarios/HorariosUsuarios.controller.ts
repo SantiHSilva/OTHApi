@@ -24,21 +24,13 @@ import {
 export class HorariosUsuariosController {
   constructor(private readonly service: HorariosUsuariosService) {}
 
-  @Get('/paginated/:page/:itemsPerPage')
+  @Get('/all')
   @ApiQuery(INCLUDEDELETEDPARAM)
   async getPaginated(
-    @Param('page') page: number,
-    @Param('itemsPerPage') itemsPerPage: number,
-    @Req() request: Request, @JWT() req
+    @Req() request: Request
   ) {
-    const idUser = req.user.idUser;
-    page = Number(page);
-    itemsPerPage = Number(itemsPerPage);
-    return this.service.getPaginatedByUser(
-      page,
-      itemsPerPage,
+    return this.service.getAll(
       request.query.includeDeleted === 'true',
-      idUser
     );
   }
 
@@ -83,6 +75,11 @@ export class HorariosUsuariosController {
   async delete(@Param('id') id: string, @JWT() req ) {
     const idUser = req.user.idUser;
     return this.service.deleteByUser(Number(id), idUser);
+  }
+
+  @Post('/restore/:id')
+  async restore(@Param('id') id: string, @JWT() req ) {
+    return this.service.restore(Number(id));
   }
 
   @Post('/share')

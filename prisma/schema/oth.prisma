@@ -58,6 +58,7 @@ model DetallesMaterias{
   id_materia Int
   descripcion String @db.Text()
   mostrar Boolean @default(true)
+  orden Int // Orden de la materia en el horario.
   deleted_at DateTime?
 
   Materias Materias @relation(fields: [id_materia], references: [id])
@@ -70,6 +71,7 @@ model HorariosMaterias{
   dia String @db.VarChar(1) // Indice del día.
   hora_inicio String @db.VarChar(5) // Formato 24 horas.
   hora_fin String @db.VarChar(5) // Formato 24 horas.
+  orden Int // Orden de la materia en el horario.
 
   deleted_at DateTime?
 
@@ -84,6 +86,7 @@ model DetallesHorariosMaterias{
   id_horario_materia Int
   descripcion String @db.Text()
   mostrar Boolean @default(true)
+  orden Int // Orden de la materia en el horario.
   deleted_at DateTime?
 
   HorariosMaterias HorariosMaterias @relation(fields: [id_horario_materia], references: [id])

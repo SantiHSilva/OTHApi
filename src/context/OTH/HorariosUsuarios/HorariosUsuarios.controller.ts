@@ -15,6 +15,7 @@ import { ApiBearerAuth, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { Request } from 'express';
 import {
   INCLUDEDELETEDPARAM,
+  Public,
 } from 'src/constants/constants';
 
 @ApiTags('HorariosUsuarios')
@@ -45,6 +46,14 @@ export class HorariosUsuariosController {
   async getById(@Param('horarioId') horarioId: string, @JWT() req) {
     const idUser = req.user.idUser;
     return this.service.getDetailsSchedule(Number(horarioId), idUser);
+  }
+
+  @Public()
+  @Get('/view/:urlPublica')
+  async getSchedulePublic(
+    @Param('urlPublica') urlPublica: string,
+  ) {
+    return this.service.getSchedulePublic(urlPublica);
   }
 
   @Post('/save/:horarioId')

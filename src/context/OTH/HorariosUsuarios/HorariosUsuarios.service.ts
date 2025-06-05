@@ -128,12 +128,14 @@ await this.prisma.$transaction(async (prisma) => {
 
         const idMateria = materiaDB.id;
 
+        let opcion = 0;
         for (const materia of horario.materias) {
-
+          opcion++;
           // ! Descripciones Generales
           for (const descripcion of materia.descripciones_generales) {
             await prisma.detallesMaterias.create({
               data: {
+                orden: opcion,
                 id_materia: idMateria,
                 descripcion: descripcion.titulo,
                 mostrar: descripcion.mostrar_en_tabla,
@@ -146,6 +148,7 @@ await this.prisma.$transaction(async (prisma) => {
           for (const horario of materia.descripciones_por_dia) {
             const horarioDB = await prisma.horariosMaterias.create({
               data: {
+                orden: opcion,
                 dia: horario.dia,
                 hora_fin: horario.fin,
                 hora_inicio: horario.inicio,
@@ -156,6 +159,7 @@ await this.prisma.$transaction(async (prisma) => {
             for (const ajuste of horario.ajustes) {
               await prisma.detallesHorariosMaterias.create({
                 data: {
+                  orden: opcion,
                   id_horario_materia: horarioDB.id,
                   descripcion: ajuste.titulo,
                   mostrar: ajuste.mostrar_en_tabla,
@@ -172,6 +176,43 @@ await this.prisma.$transaction(async (prisma) => {
       console.log(error);
       throw new NotFoundException(`Error al guardar el horario`);
     }
+  }
+
+  async getSchedulePublic(urlPublica: string) {
+    const horario = await this.prisma.compartirHorario.findUnique({
+      where: { url: urlPublica },
+      include: {
+        HorariosUsuarios: {
+          include: {
+            ComentariosHorario: true,
+            CompartirHorario: {
+              select: {
+                url: true,
+              }
+            },
+            Materias: {
+              include: {
+                HorariosMaterias: {
+                  include: {
+                    DetallesHorariosMaterias: true,
+                  }
+                },
+                DetallesMaterias: true,
+              }
+            }
+          }
+        }
+      }
+    });
+
+    if (!horario) {
+      throw new NotFoundException(`Horario no encontrado`);
+    }
+
+    return {
+      ...horario.HorariosUsuarios,
+      CompartirHorario: horario.url,
+    };
   }
 
   async getDetailsSchedule(idSchedule: number, idUser){

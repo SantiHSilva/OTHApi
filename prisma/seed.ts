@@ -6,6 +6,7 @@ import { createPaises } from './seeders/paises';
 import { createDepartamentos } from './seeders/departamentos';
 import { createCiudades } from './seeders/ciudades';
 import { createSuperUser } from './seeders/superUser';
+import { createPermisos } from './seeders/permisos';
 
 const prisma = new PrismaClient();
 
@@ -15,6 +16,7 @@ async function main() {
   await createDepartamentos(prisma);
   await createCiudades(prisma);
   await createSuperUser(prisma);
+  await createPermisos(prisma);
 }
 
 main()
